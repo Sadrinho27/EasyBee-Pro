@@ -1,0 +1,22 @@
+# Node
+**/node_modules/
+**/dist/
+**/.eslintcache
+
+# Java / Maven
+**/target/
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+**/.settings/
+**/.classpath
+**/.project
+
+# IDE
+**/.vscode/
+**/.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
