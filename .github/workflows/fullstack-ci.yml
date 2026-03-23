@@ -1,0 +1,41 @@
+name: Full Stack CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # JOB 1 : Vérification du Java (Spring)
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build Backend
+        run: |
+          cd easybee-backend
+          mvn clean compile
+
+  # JOB 2 : Vérification du React (Vite/TS)
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: easybee-frontend/package-lock.json
+      - name: Install & Build Frontend
+        run: |
+          cd easybee-frontend
+          npm install
+          npm run build
