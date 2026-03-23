@@ -1,4 +1,4 @@
-name: Full Stack CI
+name: Full Stack CI/CD (Build & Artifacts)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # JOB 1 : Vérification du Java (Spring)
+  # JOB 1 : Le Backend (Produit un fichier .jar)
   build-backend:
     runs-on: ubuntu-latest
     steps:
@@ -18,12 +18,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      - name: Build Backend
+          
+      - name: Build Backend JAR
         run: |
           cd easybee-backend
-          mvn clean compile
+          mvn clean package -DskipTests # On génère le fichier .jar dans le dossier target
 
-  # JOB 2 : Vérification du React (Vite/TS)
+      - name: Sauvegarder le JAR (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: easybee-api-binary
+          path: easybee-backend/target/*.jar
+
+  # JOB 2 : Le Frontend (Produit un dossier dist)
   build-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -33,9 +40,15 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: easybee-frontend/package-lock.json
+          
       - name: Install & Build Frontend
         run: |
           cd easybee-frontend
           npm install
           npm run build
+
+      - name: Sauvegarder le Build React (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: easybee-frontend-dist
+          path: easybee-frontend/dist/
