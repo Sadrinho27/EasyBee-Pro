@@ -30,6 +30,8 @@ public class CommandeAppro {
 
 	private String nomCommande;
 
+	private Integer quantite;
+
 	@ManyToOne
 	@JoinColumn(name = "idCatSalarie") // La clé étrangère dans ton SQL
 	private CategorieSalarie categorieSalarie;

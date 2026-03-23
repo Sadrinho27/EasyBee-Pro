@@ -44,6 +44,9 @@ const Livraisons = () => {
                             <div key={c.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-yellow-200 transition-all">
                                 <div>
                                     <p className="font-bold text-slate-800">{c.nomCommande}</p>
+                                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">
+                                        x{c.quantite}
+                                    </span>
                                     <p className="text-xs text-slate-500">Commandée le : {new Date(c.dateCommande).toLocaleDateString()}</p>
                                 </div>
                                 <button

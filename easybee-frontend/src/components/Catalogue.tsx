@@ -25,24 +25,25 @@ const Catalogue = () => {
     );
 
     const passerCommande = async (produit: Produit) => {
-        // 1. On demande la quantité à l'utilisateur via une petite popup navigateur
         const quantiteSaisie = window.prompt(`Combien d'unités de "${produit.designation}" voulez-vous commander ?`, "10");
 
-        // 2. Si l'utilisateur annule ou ne met rien, on arrête là
-        if (!quantiteSaisie || isNaN(Number(quantiteSaisie))) {
+        // On convertit le texte en vrai nombre entier
+        const quantite = parseInt(quantiteSaisie || "0", 10);
+
+        if (!quantite || isNaN(quantite) || quantite <= 0) {
             alert("Commande annulée ou quantité invalide.");
             return;
         }
 
         try {
             await axios.post('http://localhost:8080/api/commandes', {
-                // On peut concaténer la quantité dans le nom pour que le préparateur le voie
-                nomCommande: `${produit.designation} (Qté: ${quantiteSaisie})`,
+                nomCommande: produit.designation, // Le nom reste propre
+                quantite: quantite,               // ⬅️ On envoie la vraie valeur à la BDD !
                 statutCommande: "en attente",
                 dateCommande: new Date().toISOString(),
                 categorieSalarie: { id: 1 }
             });
-            alert(`Succès : ${quantiteSaisie} x ${produit.designation} commandés ! 🐝`);
+            alert(`Succès : ${quantite} x ${produit.designation} commandés ! 🐝`);
         } catch (error) {
             alert("Erreur lors de l'envoi de la commande.");
         }
@@ -86,8 +87,8 @@ const Catalogue = () => {
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className={`inline-flex items-center w-fit px-3 py-1 rounded-full text-xs font-bold border ${produit.stockMagasin < produit.stockMinimum
-                                                ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
-                                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
+                                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                             }`}>
                                             {produit.stockMagasin < produit.stockMinimum ? '🚨' : '✅'} {produit.stockMagasin} en stock
                                         </span>

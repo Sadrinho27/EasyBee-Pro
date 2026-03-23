@@ -21,7 +21,8 @@ export interface Commande {
   id: number;
   dateCommande: string;
   statutCommande: string;
-  nomCommande: string; // C'est le nom du produit dans ta base
+  nomCommande: string;
+  quantite: number;
   categorieSalarie: {
     nom: string;
   };
