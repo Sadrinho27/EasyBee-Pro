@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Produit } from '../types';
 import axios from 'axios';
 
 const Catalogue = () => {
     const [produits, setProduits] = useState<Produit[]>([]);
     const [search, setSearch] = useState('');
+
+    // --- 🛠️ NOUVEAUX STATES POUR LA MODALE ---
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [produitSelectionne, setProduitSelectionne] = useState<Produit | null>(null);
+    const [quantite, setQuantite] = useState<number>(10);
+    const [isSubmitting, setIsSubmitting] = useState(false); // Pour bloquer le bouton pendant le chargement
 
     useEffect(() => {
         const fetchProduits = async () => {
@@ -19,38 +25,48 @@ const Catalogue = () => {
         fetchProduits();
     }, []);
 
-    // Logique de filtrage pour la barre de recherche
     const produitsFiltrés = produits.filter(p =>
         p.designation.toLowerCase().includes(search.toLowerCase())
     );
 
-    const passerCommande = async (produit: Produit) => {
-        const quantiteSaisie = window.prompt(`Combien d'unités de "${produit.designation}" voulez-vous commander ?`, "10");
+    // 1️⃣ On ouvre la modale au lieu de faire un window.prompt
+    const handleClickCommander = (produit: Produit) => {
+        setProduitSelectionne(produit);
+        setQuantite(10); // Valeur par défaut
+        setIsModalOpen(true);
+    };
 
-        // On convertit le texte en vrai nombre entier
-        const quantite = parseInt(quantiteSaisie || "0", 10);
+    // 2️⃣ La fonction qui s'exécute quand on clique sur "Confirmer" dans la modale
+    const validerCommande = async () => {
+        if (!produitSelectionne || quantite <= 0) return;
 
-        if (!quantite || isNaN(quantite) || quantite <= 0) {
-            alert("Commande annulée ou quantité invalide.");
-            return;
-        }
+        setIsSubmitting(true); // On affiche "Envoi..." sur le bouton
 
         try {
             await axios.post('http://localhost:8080/api/commandes', {
-                nomCommande: produit.designation, // Le nom reste propre
-                quantite: quantite,               // ⬅️ On envoie la vraie valeur à la BDD !
+                nomCommande: produitSelectionne.designation,
+                quantite: quantite,
                 statutCommande: "en attente",
                 dateCommande: new Date().toISOString(),
                 categorieSalarie: { id: 1 }
             });
-            alert(`Succès : ${quantite} x ${produit.designation} commandés ! 🐝`);
+            
+            // Succès : On ferme la modale
+            setIsModalOpen(false);
+            setIsSubmitting(false);
+            
+            // Pour l'instant on garde une alerte pour le succès, on passera au "Toast" après si tu veux !
+            alert(`✅ Succès : ${quantite} x ${produitSelectionne.designation} commandés ! 🐝`);
+            
         } catch (error) {
-            alert("Erreur lors de l'envoi de la commande.");
+            alert("❌ Erreur lors de l'envoi de la commande.");
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-500">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-500 relative">
+            
             {/* Barre de recherche */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <div className="relative w-full md:w-72">
@@ -102,7 +118,7 @@ const Catalogue = () => {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <button
-                                        onClick={() => passerCommande(produit)}
+                                        onClick={() => handleClickCommander(produit)} // ⬅️ Modifié ici
                                         className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md font-bold text-xs transition-all shadow-sm active:scale-95"
                                     >
                                         Commander
@@ -113,6 +129,60 @@ const Catalogue = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* --- 🎨 LA FAMEUSE MODALE TAILWIND --- */}
+            {isModalOpen && produitSelectionne && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md transform transition-all animate-in zoom-in-95 duration-200">
+                        
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-slate-800">
+                                Commander un produit
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                ✖
+                            </button>
+                        </div>
+
+                        <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <p className="font-semibold text-slate-700">{produitSelectionne.designation}</p>
+                            <p className="text-sm text-slate-500 mt-1">Stock actuel : {produitSelectionne.stockMagasin}</p>
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                Quantité à commander :
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={quantite}
+                                onChange={(e) => setQuantite(parseInt(e.target.value) || 0)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all text-lg font-medium"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                disabled={isSubmitting}
+                                className="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-colors"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={validerCommande}
+                                disabled={isSubmitting || quantite <= 0}
+                                className="px-5 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                            >
+                                {isSubmitting ? 'Envoi en cours...' : 'Confirmer la commande'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
         </div>
     );
 };
