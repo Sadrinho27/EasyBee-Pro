@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import type { Produit } from '../types';
 import axios from 'axios';
 
@@ -6,7 +7,6 @@ const Catalogue = () => {
     const [produits, setProduits] = useState<Produit[]>([]);
     const [search, setSearch] = useState('');
 
-    // --- 🛠️ NOUVEAUX STATES POUR LA MODALE ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [produitSelectionne, setProduitSelectionne] = useState<Produit | null>(null);
     const [quantite, setQuantite] = useState<number>(10);
@@ -29,18 +29,16 @@ const Catalogue = () => {
         p.designation.toLowerCase().includes(search.toLowerCase())
     );
 
-    // 1️⃣ On ouvre la modale au lieu de faire un window.prompt
     const handleClickCommander = (produit: Produit) => {
         setProduitSelectionne(produit);
         setQuantite(10); // Valeur par défaut
         setIsModalOpen(true);
     };
 
-    // 2️⃣ La fonction qui s'exécute quand on clique sur "Confirmer" dans la modale
     const validerCommande = async () => {
         if (!produitSelectionne || quantite <= 0) return;
 
-        setIsSubmitting(true); // On affiche "Envoi..." sur le bouton
+        setIsSubmitting(true);
 
         try {
             await axios.post('http://localhost:8080/api/commandes', {
@@ -50,23 +48,20 @@ const Catalogue = () => {
                 dateCommande: new Date().toISOString(),
                 categorieSalarie: { id: 1 }
             });
-            
-            // Succès : On ferme la modale
+
             setIsModalOpen(false);
             setIsSubmitting(false);
-            
-            // Pour l'instant on garde une alerte pour le succès, on passera au "Toast" après si tu veux !
-            alert(`✅ Succès : ${quantite} x ${produitSelectionne.designation} commandés ! 🐝`);
-            
+
+            toast.success(`${quantite} x ${produitSelectionne.designation} commandés ! 🐝`);
         } catch (error) {
-            alert("❌ Erreur lors de l'envoi de la commande.");
+            toast.error("❌ Erreur lors de l'envoi de la commande.");
             setIsSubmitting(false);
         }
     };
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-500 relative">
-            
+
             {/* Barre de recherche */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <div className="relative w-full md:w-72">
@@ -118,7 +113,7 @@ const Catalogue = () => {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <button
-                                        onClick={() => handleClickCommander(produit)} // ⬅️ Modifié ici
+                                        onClick={() => handleClickCommander(produit)}
                                         className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md font-bold text-xs transition-all shadow-sm active:scale-95"
                                     >
                                         Commander
@@ -130,11 +125,11 @@ const Catalogue = () => {
                 </table>
             </div>
 
-            {/* --- 🎨 LA FAMEUSE MODALE TAILWIND --- */}
+            {/* Modale pour passer une commande */}
             {isModalOpen && produitSelectionne && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity">
                     <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md transform transition-all animate-in zoom-in-95 duration-200">
-                        
+
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold text-slate-800">
                                 Commander un produit
@@ -182,7 +177,9 @@ const Catalogue = () => {
                     </div>
                 </div>
             )}
-            
+
+            {/* Le gestionnaire de notifications */}
+            <Toaster position="bottom-right" reverseOrder={false} />
         </div>
     );
 };

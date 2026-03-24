@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import type { Commande } from '../types';
 import axios from 'axios';
 
@@ -8,7 +9,6 @@ const Livraisons = () => {
     const fetchCommandes = async () => {
         try {
             const response = await axios.get('http://localhost:8080/api/commandes');
-            // On ne garde que celles qui sont "en attente"
             const enAttente = response.data.filter((c: Commande) => c.statutCommande === "en attente");
             setCommandes(enAttente);
         } catch (error) {
@@ -20,13 +20,11 @@ const Livraisons = () => {
 
     const validerLivraison = async (id: number) => {
         try {
-            // Appel à ton super bouton PUT du Backend
             await axios.put(`http://localhost:8080/api/commandes/${id}/valider`);
-            // Mise à jour visuelle immédiate : on retire la commande de la liste
             setCommandes(prev => prev.filter(c => c.id !== id));
-            alert("Livraison validée ! Le stock a été mis à jour. 🐝");
+            toast.success("Livraison validée ! Stock mis à jour. 🐝");
         } catch (error) {
-            alert("Erreur lors de la validation.");
+            toast.error("Erreur lors de la validation.");
         }
     };
 
@@ -60,6 +58,9 @@ const Livraisons = () => {
                     </div>
                 )}
             </div>
+
+            {/* Le gestionnaire de notifications */}
+            <Toaster position="bottom-right" reverseOrder={false} />
         </div>
     );
 };
