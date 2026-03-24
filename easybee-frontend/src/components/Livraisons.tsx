@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import type { Commande } from '../types';
 import axios from 'axios';
 
@@ -60,7 +60,7 @@ const Livraisons = () => {
             </div>
 
             {/* Le gestionnaire de notifications */}
-            <Toaster position="bottom-right" reverseOrder={false} />
+            {/* <Toaster position="bottom-right" reverseOrder={false} /> */}
         </div>
     );
 };

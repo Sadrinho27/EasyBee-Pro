@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import type { User } from './types';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -14,14 +15,15 @@ function App() {
         <Route path="/login" element={<Login onLogin={setUser} />} />
 
         {/* Route protégée : si pas de user, redirection vers login */}
-        <Route 
-          path="/dashboard" 
-          element={user ? <Dashboard user={user} /> : <Navigate to="/login" />} 
+        <Route
+          path="/dashboard"
+          element={user ? <Dashboard user={user} /> : <Navigate to="/login" />}
         />
 
         {/* Redirection par défaut */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+      <Toaster position="bottom-right" />
     </Router>
   );
 }
