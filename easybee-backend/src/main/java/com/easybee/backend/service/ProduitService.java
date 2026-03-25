@@ -1,7 +1,6 @@
 package com.easybee.backend.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -16,17 +15,36 @@ public class ProduitService {
 
 	private final ProduitRepository produitRepository;
 
-	public List<Produit> getAll() {
-		return produitRepository.findAll();
+	public Produit createProduit(Produit nouveauProduit) {
+		nouveauProduit.setId(null);
+
+		return produitRepository.save(nouveauProduit);
 	}
 
-	// Une méthode "Métier" : récupérer uniquement les produits en alerte stock
-	public List<Produit> getProduitsEnAlerte() {
-		return produitRepository.findAll().stream().filter(p -> p.getStockMagasin() < p.getStockMinimum())
-				.collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
-					if (list.isEmpty())
-						System.out.println("Aucune alerte, les abeilles dorment tranquilles !");
-					return list;
-				}));
+	public Produit updateProduit(Long id, Produit produitDetails) {
+		return produitRepository.findById(id).map(produitExistant -> {
+
+			produitExistant.setCodeProduit(produitDetails.getCodeProduit());
+			produitExistant.setStockMagasin(produitDetails.getStockMagasin());
+			produitExistant.setStockMinimum(produitDetails.getStockMinimum());
+			produitExistant.setDesignation(produitDetails.getDesignation());
+			produitExistant.setPrix(produitDetails.getPrix());
+			produitExistant.setStockEntrepot(produitDetails.getStockEntrepot());
+
+			return produitRepository.save(produitExistant);
+
+		}).orElseThrow(() -> new RuntimeException("Erreur : Produit introuvable avec l'ID " + id));
+	}
+
+	public void deleteProduit(Long id) {
+		if (!produitRepository.existsById(id)) {
+			throw new RuntimeException("Erreur : Impossible de supprimer, produit introuvable avec l'ID " + id);
+		}
+
+		produitRepository.deleteById(id);
+	}
+
+	public List<Produit> getAll() {
+		return produitRepository.findAll();
 	}
 }
