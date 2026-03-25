@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LoginProps {
-  onLogin: (user: User) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login = () => {
   const [identifiant, setIdentifiant] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     try {
@@ -21,7 +18,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         identifiant,
         motDePasse
       });
-      onLogin(response.data);
+      login(response.data);
       navigate('/dashboard');
     } catch (err) {
       setError("Identifiants incorrects. Vérifiez votre ruche ! 🐝");
@@ -41,7 +38,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1">Identifiant</label>
-            <input 
+            <input
               type="text"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all bg-slate-50"
               value={identifiant}
@@ -51,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1">Mot de passe</label>
-            <input 
+            <input
               type="password"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all bg-slate-50"
               value={motDePasse}
@@ -59,10 +56,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               placeholder="••••••••"
             />
           </div>
-          
+
           {error && <p className="text-red-500 text-sm font-medium text-center">{error}</p>}
 
-          <button 
+          <button
             type="submit"
             className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-lg shadow-yellow-200 transition-all active:scale-95"
           >

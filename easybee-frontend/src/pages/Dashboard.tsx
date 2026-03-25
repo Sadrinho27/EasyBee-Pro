@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import type { User } from '../types';
+import { useState } from 'react';
 import Catalogue from '../components/Catalogue';
 import Livraisons from '../components/Livraisons';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-interface DashboardProps {
-    user: User;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+const Dashboard = () => {
     // État pour savoir quelle vue afficher
     const [view, setView] = useState<'menu' | 'catalogue' | 'livraisons'>('menu');
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -21,11 +20,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
-                        <p className="text-sm font-bold text-slate-900">{user.prenomSalarie} {user.nomSalarie}</p>
-                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest">{user.categorie.nom}</p>
+                        <p className="text-sm font-bold text-slate-900">{user!.prenomSalarie} {user!.nomSalarie}</p>
+                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest">{user!.categorie.nom}</p>
                     </div>
                     <button
-                        onClick={() => window.location.href = '/'}
+                        onClick={() => {
+                            logout();
+                            navigate('/login');
+                        }}
                         className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all"
                     >
                         ❌
@@ -55,17 +57,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                                 <p className="text-slate-500 text-sm mt-2 leading-relaxed">Consulter les prix et l'état des stocks en temps réel.</p>
                             </div>
 
-                            {/* Carte Alertes */}
-                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group">
-                                <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-2xl mb-6">
-                                    ⚠️
-                                </div>
-                                <h4 className="text-xl font-bold text-slate-800">Alertes Stock</h4>
-                                <p className="text-slate-500 text-sm mt-2 leading-relaxed">Liste des produits nécessitant un réapprovisionnement.</p>
-                            </div>
-
                             {/* Carte Spéciale Préparateur */}
-                            {user.categorie.nom === 'preparateur' && (
+                            {user!.categorie.nom === 'preparateur' && (
                                 <div
                                     onClick={() => setView('livraisons')}
                                     className="bg-slate-900 p-8 rounded-3xl shadow-xl text-white hover:bg-slate-800 transition-all cursor-pointer"

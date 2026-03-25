@@ -1,30 +1,42 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { type JSX } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import type { User } from './types';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" />;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
+  );
+}
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
-
   return (
-    <Router>
-      <Routes>
-        {/* Route de Login */}
-        <Route path="/login" element={<Login onLogin={setUser} />} />
-
-        {/* Route protégée : si pas de user, redirection vers login */}
-        <Route
-          path="/dashboard"
-          element={user ? <Dashboard user={user} /> : <Navigate to="/login" />}
-        />
-
-        {/* Redirection par défaut */}
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
-      <Toaster position="bottom-right" />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+        <Toaster position="bottom-right" />
+      </Router>
+    </AuthProvider>
   );
 }
 
