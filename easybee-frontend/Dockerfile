@@ -8,6 +8,8 @@ RUN npm run build
 
 # ÉTAPE 2 : Serveur de production (Nginx)
 FROM nginx:stable-alpine
+# On écrase la configuration par défaut de Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 # On copie le résultat du build (dossier dist) dans le dossier public d'Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 # On expose le port 80 (port par défaut d'Nginx)
