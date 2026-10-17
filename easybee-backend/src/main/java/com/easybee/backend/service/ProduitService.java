@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.easybee.backend.entity.Produit;
+import com.easybee.backend.exception.ProduitIntrouvableException;
 import com.easybee.backend.repository.ProduitRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ public class ProduitService {
 	private final ProduitRepository produitRepository;
 
 	public Produit createProduit(Produit nouveauProduit) {
+		this.verifierProduit(nouveauProduit);
 		nouveauProduit.setId(null);
 
 		return produitRepository.save(nouveauProduit);
@@ -23,6 +25,7 @@ public class ProduitService {
 
 	public Produit updateProduit(Long id, Produit produitDetails) {
 		return produitRepository.findById(id).map(produitExistant -> {
+			this.verifierProduit(produitDetails);
 
 			produitExistant.setCodeProduit(produitDetails.getCodeProduit());
 			produitExistant.setStockMagasin(produitDetails.getStockMagasin());
@@ -33,12 +36,12 @@ public class ProduitService {
 
 			return produitRepository.save(produitExistant);
 
-		}).orElseThrow(() -> new RuntimeException("Erreur : Produit introuvable avec l'ID " + id));
+		}).orElseThrow(() -> new ProduitIntrouvableException(id));
 	}
 
 	public void deleteProduit(Long id) {
 		if (!produitRepository.existsById(id)) {
-			throw new RuntimeException("Erreur : Impossible de supprimer, produit introuvable avec l'ID " + id);
+			throw new ProduitIntrouvableException(id);
 		}
 
 		produitRepository.deleteById(id);
@@ -47,4 +50,23 @@ public class ProduitService {
 	public List<Produit> getAll() {
 		return produitRepository.findAll();
 	}
+
+	public Produit getById(Long id) {
+		return produitRepository.findById(id).orElseThrow(() -> new ProduitIntrouvableException(id));
+	}
+
+	public List<Produit> getProduitsAlerteStock() {
+		return produitRepository.getProduitsAlerteStock();
+	}
+
+	private void verifierProduit(Produit produit) {
+		if (produit.getDesignation() == null || produit.getDesignation().isBlank()) {
+			throw new IllegalArgumentException("La désignation est obligatoire");
+		}
+
+		if (produit.getPrix() == null || produit.getPrix() <= 0) {
+			throw new IllegalArgumentException("Le prix doit être supérieur à 0");
+		}
+	}
+
 }
