@@ -34,7 +34,7 @@ public class SalarieService {
 			throw new DonneesInvalidesException("Le mot de passe est obligatoire");
 		}
 
-		String mdpHasher = BCrypt.hashpw(motDePasse, BCrypt.gensalt(12));
+		String mdpHasher = this.hasher(motDePasse);
 		nouveauSalarie.setMotDePasse(mdpHasher);
 
 		return salarieRepository.save(nouveauSalarie);
@@ -48,7 +48,9 @@ public class SalarieService {
 			salarieExistant.setNomSalarie(salarieDetails.getNomSalarie());
 			salarieExistant.setPrenomSalarie(salarieDetails.getPrenomSalarie());
 			salarieExistant.setIdentifiant(salarieDetails.getIdentifiant());
-			salarieExistant.setMotDePasse(salarieDetails.getMotDePasse());
+			if (salarieDetails.getMotDePasse() != null && !salarieDetails.getMotDePasse().isBlank()) {
+				salarieExistant.setMotDePasse(this.hasher(salarieDetails.getMotDePasse()));
+			}
 			salarieExistant.setCategorie(salarieDetails.getCategorie());
 
 			return salarieRepository.save(salarieExistant);
@@ -68,6 +70,10 @@ public class SalarieService {
 		return salarieRepository.findAll();
 	}
 
+	public Salarie getById(Long id) {
+		return salarieRepository.findById(id).orElseThrow(() -> new RessourceIntrouvableException(RESSOURCE, id));
+	}
+
 	private void verifierSalarie(Salarie salarie) {
 		if (salarie.getMatriculeSalarie() == null || salarie.getMatriculeSalarie() <= 0) {
 			throw new DonneesInvalidesException("Le matricule est obligatoire");
@@ -82,5 +88,10 @@ public class SalarieService {
 			throw new DonneesInvalidesException("L'identifiant est obligatoire");
 		}
 
+	}
+
+	private String hasher(String mdp) {
+		String salt = BCrypt.gensalt(12);
+		return BCrypt.hashpw(mdp, salt);
 	}
 }
