@@ -6,6 +6,9 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import com.easybee.backend.entity.Salarie;
+import com.easybee.backend.exception.ConflitException;
+import com.easybee.backend.exception.DonneesInvalidesException;
+import com.easybee.backend.exception.RessourceIntrouvableException;
 import com.easybee.backend.repository.SalarieRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -14,24 +17,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SalarieService {
 
+	private static final String RESSOURCE = "Salarie";
 	private final SalarieRepository salarieRepository;
 
 	public Salarie createSalarie(Salarie nouveauSalarie) {
-	    nouveauSalarie.setId(null);
+		this.verifierSalarie(nouveauSalarie);
 
-	    String motDePasse = nouveauSalarie.getMotDePasse();
-	    if (motDePasse == null || motDePasse.isBlank()) {
-	        throw new IllegalArgumentException("Mot de passe invalide");
-	    }
+		if (salarieRepository.findByIdentifiant(nouveauSalarie.getIdentifiant()).isPresent()) {
+			throw new ConflitException("Cet identifiant est déjà utilisé");
+		}
 
-	    String mdpHasher = BCrypt.hashpw(motDePasse, BCrypt.gensalt(12));
-	    nouveauSalarie.setMotDePasse(mdpHasher);
+		nouveauSalarie.setId(null);
 
-	    return salarieRepository.save(nouveauSalarie);
+		String motDePasse = nouveauSalarie.getMotDePasse();
+		if (motDePasse == null || motDePasse.isBlank()) {
+			throw new DonneesInvalidesException("Le mot de passe est obligatoire");
+		}
+
+		String mdpHasher = BCrypt.hashpw(motDePasse, BCrypt.gensalt(12));
+		nouveauSalarie.setMotDePasse(mdpHasher);
+
+		return salarieRepository.save(nouveauSalarie);
 	}
 
 	public Salarie updateSalarie(Long id, Salarie salarieDetails) {
 		return salarieRepository.findById(id).map(salarieExistant -> {
+			this.verifierSalarie(salarieDetails);
 
 			salarieExistant.setMatriculeSalarie(salarieDetails.getMatriculeSalarie());
 			salarieExistant.setNomSalarie(salarieDetails.getNomSalarie());
@@ -42,12 +53,12 @@ public class SalarieService {
 
 			return salarieRepository.save(salarieExistant);
 
-		}).orElseThrow(() -> new RuntimeException("Erreur : Salarie introuvable avec l'ID " + id));
+		}).orElseThrow(() -> new RessourceIntrouvableException(RESSOURCE, id));
 	}
 
 	public void deleteSalarie(Long id) {
 		if (!salarieRepository.existsById(id)) {
-			throw new RuntimeException("Erreur : Impossible de supprimer, salarie introuvable avec l'ID " + id);
+			throw new RessourceIntrouvableException(RESSOURCE, id);
 		}
 
 		salarieRepository.deleteById(id);
@@ -55,5 +66,21 @@ public class SalarieService {
 
 	public List<Salarie> getAll() {
 		return salarieRepository.findAll();
+	}
+
+	private void verifierSalarie(Salarie salarie) {
+		if (salarie.getMatriculeSalarie() == null || salarie.getMatriculeSalarie() <= 0) {
+			throw new DonneesInvalidesException("Le matricule est obligatoire");
+		}
+		if (salarie.getNomSalarie() == null || salarie.getNomSalarie().isBlank()) {
+			throw new DonneesInvalidesException("Le nom est obligatoire");
+		}
+		if (salarie.getPrenomSalarie() == null || salarie.getPrenomSalarie().isBlank()) {
+			throw new DonneesInvalidesException("Le prénom est obligatoire");
+		}
+		if (salarie.getIdentifiant() == null || salarie.getIdentifiant().isBlank()) {
+			throw new DonneesInvalidesException("L'identifiant est obligatoire");
+		}
+
 	}
 }

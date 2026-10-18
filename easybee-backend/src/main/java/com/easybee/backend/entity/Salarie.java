@@ -1,6 +1,6 @@
 package com.easybee.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,7 +29,7 @@ public class Salarie {
 	private String prenomSalarie;
 	private String identifiant;
 
-	@JsonIgnore // Empêche le mot de passe d'être inclus dans le JSON sortant
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	@Column(name = "motDePasse", nullable = false)
 	private String motDePasse;
 

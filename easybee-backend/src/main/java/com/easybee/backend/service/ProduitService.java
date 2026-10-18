@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.easybee.backend.entity.Produit;
-import com.easybee.backend.exception.ProduitIntrouvableException;
+import com.easybee.backend.exception.DonneesInvalidesException;
+import com.easybee.backend.exception.RessourceIntrouvableException;
 import com.easybee.backend.repository.ProduitRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProduitService {
 
+	private static final String RESSOURCE = "Produit";
 	private final ProduitRepository produitRepository;
 
 	public Produit createProduit(Produit nouveauProduit) {
@@ -36,12 +38,12 @@ public class ProduitService {
 
 			return produitRepository.save(produitExistant);
 
-		}).orElseThrow(() -> new ProduitIntrouvableException(id));
+		}).orElseThrow(() -> new RessourceIntrouvableException(RESSOURCE, id));
 	}
 
 	public void deleteProduit(Long id) {
 		if (!produitRepository.existsById(id)) {
-			throw new ProduitIntrouvableException(id);
+			throw new RessourceIntrouvableException(RESSOURCE, id);
 		}
 
 		produitRepository.deleteById(id);
@@ -52,7 +54,7 @@ public class ProduitService {
 	}
 
 	public Produit getById(Long id) {
-		return produitRepository.findById(id).orElseThrow(() -> new ProduitIntrouvableException(id));
+		return produitRepository.findById(id).orElseThrow(() -> new RessourceIntrouvableException(RESSOURCE, id));
 	}
 
 	public List<Produit> getProduitsAlerteStock() {
@@ -61,11 +63,11 @@ public class ProduitService {
 
 	private void verifierProduit(Produit produit) {
 		if (produit.getDesignation() == null || produit.getDesignation().isBlank()) {
-			throw new IllegalArgumentException("La désignation est obligatoire");
+			throw new DonneesInvalidesException("La désignation est obligatoire");
 		}
 
 		if (produit.getPrix() == null || produit.getPrix() <= 0) {
-			throw new IllegalArgumentException("Le prix doit être supérieur à 0");
+			throw new DonneesInvalidesException("Le prix doit être supérieur à 0");
 		}
 	}
 
