@@ -34,6 +34,14 @@ public class GestionnaireErreurs {
 
 		return ResponseEntity.status(statut).body(erreur);
 	}
+	
+	@ExceptionHandler(IdentifiantsInvalidesException.class)
+	public ResponseEntity<ErreurResponse> gererIdentifiantsInvalides(IdentifiantsInvalidesException e) {
+		HttpStatus statut = HttpStatus.UNAUTHORIZED;
+		ErreurResponse erreur = new ErreurResponse(statut.value(), e.getMessage(), LocalDateTime.now());
+
+		return ResponseEntity.status(statut).body(erreur);
+	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<ErreurResponse> gererIllegalArgument(IllegalArgumentException e) {
