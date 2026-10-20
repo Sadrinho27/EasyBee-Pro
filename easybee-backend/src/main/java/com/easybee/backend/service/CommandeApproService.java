@@ -69,7 +69,7 @@ public class CommandeApproService {
 			throw new DonneesInvalidesException("Le nom est obligatoire");
 		}
 		if (commande.getQuantite() != null && commande.getQuantite() <= 0) {
-			throw new DonneesInvalidesException("La quantité doit être supérieur ou égale à 1");
+			throw new DonneesInvalidesException("La quantité doit être supérieure ou égale à 1");
 		}
 
 	}

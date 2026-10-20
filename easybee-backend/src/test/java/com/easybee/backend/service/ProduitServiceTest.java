@@ -24,137 +24,192 @@ import com.easybee.backend.repository.ProduitRepository;
 @ExtendWith(MockitoExtension.class)
 class ProduitServiceTest {
 
-	@Mock // un faux repository
+	@Mock
 	private ProduitRepository produitRepository;
 
-	@InjectMocks // le VRAI service, avec le faux repository injecté
+	@InjectMocks
 	private ProduitService produitService;
 
-	@Test
-	void createProduit_prixNegatif_lanceDonneesInvalides() {
-		// Arrange : préparer les données
+	// Un produit valide sur tous les champs : chaque test en casse UN SEUL
+	private Produit produitValide() {
 		Produit produit = new Produit();
-		produit.setDesignation("Miel");
-		produit.setPrix(-3f);
+		produit.setId(24L);
+		produit.setCodeProduit(1001);
+		produit.setDesignation("Miel expérimental");
+		produit.setPrix(15f);
+		produit.setStockMagasin(12);
+		produit.setStockMinimum(10);
+		produit.setStockEntrepot(50);
+		return produit;
+	}
 
-		// Act + Assert : appeler la méthode et vérifier l'exception
+	// Vérifie qu'un produit est refusé à la création, avec le bon message, sans
+	// rien sauvegarder
+	private void assertCreationRefusee(Produit produit, String messageAttendu) {
 		DonneesInvalidesException e = assertThrows(DonneesInvalidesException.class,
 				() -> produitService.createProduit(produit));
-		assertEquals("Le prix doit être supérieur à 0", e.getMessage());
-
-		// Assert : on n'a JAMAIS essayé de sauvegarder un produit invalide
+		assertEquals(messageAttendu, e.getMessage());
 		verify(produitRepository, never()).save(any());
 	}
 
+	// ===================== createProduit : cas valides =====================
+
 	@Test
 	void createProduit_valide_sauvegardeEtMetIdANull() {
-		// Arrange : un produit VALIDE (désignation + prix), avec un id "pirate"
-		Produit produit = new Produit();
+		// Arrange : un produit valide avec un id "pirate"
+		Produit produit = produitValide();
 		produit.setId(42L);
-		produit.setDesignation("Miel");
-		produit.setPrix(1.4f);
-
-		// Le faux repository renvoie simplement ce qu'on lui donne à sauvegarder
 		when(produitRepository.save(any(Produit.class))).thenAnswer(inv -> inv.getArgument(0));
 
-		// Act : PAS d'assertThrows, on appelle simplement la méthode
+		// Act
 		Produit resultat = produitService.createProduit(produit);
 
-		// Assert : l'id a été remis à null avant la sauvegarde…
+		// Assert : l'id a été remis à null, et le produit a bien été sauvegardé
 		assertNull(resultat.getId());
-		// … et save a bien été appelé
-		verify(produitRepository).save(resultat);
+		verify(produitRepository).save(produit);
+	}
+
+	@Test
+	void createProduit_stockMagasinZero_estAccepte() {
+		// Arrange : un magasin en rupture, c'est un cas normal
+		Produit produit = produitValide();
+		produit.setStockMagasin(0);
+		when(produitRepository.save(any(Produit.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		// Act
+		Produit resultat = produitService.createProduit(produit);
+
+		// Assert
+		assertEquals(0, resultat.getStockMagasin());
+		verify(produitRepository).save(produit);
+	}
+
+	// ===================== createProduit : champs obligatoires =====================
+
+	@Test
+	void createProduit_sansCodeProduit_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setCodeProduit(null);
+
+		assertCreationRefusee(produit, "Le code produit est obligatoire");
 	}
 
 	@Test
 	void createProduit_designationVide_lanceDonneesInvalides() {
-		// Arrange : préparer les données
-		Produit produit = new Produit();
+		Produit produit = produitValide();
 		produit.setDesignation("");
-		produit.setPrix(12.5f);
 
-		// Act + Assert : appeler la méthode et vérifier l'exception
-		DonneesInvalidesException e = assertThrows(DonneesInvalidesException.class,
-				() -> produitService.createProduit(produit));
-		assertEquals("La désignation est obligatoire", e.getMessage());
-
-		// Assert : on n'a JAMAIS essayé de sauvegarder un produit invalide
-		verify(produitRepository, never()).save(any());
+		assertCreationRefusee(produit, "La désignation est obligatoire");
 	}
 
 	@Test
 	void createProduit_designationEspaces_lanceDonneesInvalides() {
-		// Arrange : préparer les données
-		Produit produit = new Produit();
+		Produit produit = produitValide();
 		produit.setDesignation("   ");
-		produit.setPrix(12.5f);
 
-		// Act + Assert : appeler la méthode et vérifier l'exception
-		DonneesInvalidesException e = assertThrows(DonneesInvalidesException.class,
-				() -> produitService.createProduit(produit));
-		assertEquals("La désignation est obligatoire", e.getMessage());
-
-		// Assert : on n'a JAMAIS essayé de sauvegarder un produit invalide
-		verify(produitRepository, never()).save(any());
+		assertCreationRefusee(produit, "La désignation est obligatoire");
 	}
 
 	@Test
-	void getById_inexistant_lanceRessourceIntrouvable() {
-		// Arrange : préparer les données
-		when(produitRepository.findById(99999L)).thenReturn(Optional.empty());
+	void createProduit_prixNegatif_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setPrix(-3f);
 
-		// Act : appeler la méthode et vérifier l'exception
-		RessourceIntrouvableException e = assertThrows(RessourceIntrouvableException.class,
-				() -> produitService.getById(99999L));
-
-		// Assert
-		assertEquals("Produit introuvable avec l'ID 99999", e.getMessage());
+		assertCreationRefusee(produit, "Le prix doit être supérieur à 0");
 	}
+
+	@Test
+	void createProduit_sansStockMagasin_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setStockMagasin(null);
+
+		assertCreationRefusee(produit, "Le stock magasin est obligatoire");
+	}
+
+	@Test
+	void createProduit_sansStockMinimum_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setStockMinimum(null);
+
+		assertCreationRefusee(produit, "Le stock minimum est obligatoire");
+	}
+
+	@Test
+	void createProduit_sansStockEntrepot_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setStockEntrepot(null);
+
+		assertCreationRefusee(produit, "Le stock entrepot est obligatoire");
+	}
+
+	@Test
+	void createProduit_stockMagasinNegatif_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setStockMagasin(-5);
+
+		assertCreationRefusee(produit, "Le stock magasin ne peut pas être négatif");
+	}
+
+	@Test
+	void createProduit_stockEntrepotNegatif_lanceDonneesInvalides() {
+		Produit produit = produitValide();
+		produit.setStockEntrepot(-1);
+
+		assertCreationRefusee(produit, "Le stock entrepot ne peut pas être négatif");
+	}
+
+	// ===================== getById =====================
 
 	@Test
 	void getById_existant_renvoieLeProduit() {
-		// Arrange :
-		Produit produit = new Produit();
-		produit.setId(24L);
-		produit.setDesignation("Miel");
-		produit.setPrix(12.5f);
-
+		// Arrange
+		Produit produit = produitValide();
 		when(produitRepository.findById(24L)).thenReturn(Optional.of(produit));
 
-		// Act :
+		// Act
 		Produit resultat = produitService.getById(24L);
 
-		// Assert :
+		// Assert
 		assertEquals(produit, resultat);
 	}
 
 	@Test
+	void getById_inexistant_lanceRessourceIntrouvable() {
+		// Arrange
+		when(produitRepository.findById(99999L)).thenReturn(Optional.empty());
+
+		// Act + Assert
+		RessourceIntrouvableException e = assertThrows(RessourceIntrouvableException.class,
+				() -> produitService.getById(99999L));
+		assertEquals("Produit introuvable avec l'ID 99999", e.getMessage());
+	}
+
+	// ===================== deleteProduit =====================
+
+	@Test
 	void deleteProduit_inexistant_neSupprimeRien() {
-		// Arrange :
+		// Arrange
 		when(produitRepository.existsById(99999L)).thenReturn(false);
 
-		// Act + Assert :
+		// Act + Assert
 		RessourceIntrouvableException e = assertThrows(RessourceIntrouvableException.class,
 				() -> produitService.deleteProduit(99999L));
 		assertEquals("Produit introuvable avec l'ID 99999", e.getMessage());
-
-		// Assert :
 		verify(produitRepository, never()).deleteById(any());
 	}
 
+	// ===================== updateProduit =====================
+
 	@Test
 	void updateProduit_inexistantEtInvalide_lance404() {
-		// Arrange :
+		// Arrange : un produit totalement vide (invalide) ET un id inexistant
 		Produit produit = new Produit();
 		when(produitRepository.findById(99999L)).thenReturn(Optional.empty());
 
-		// Act + Assert :
+		// Act + Assert : le 404 doit gagner sur le 400
 		RessourceIntrouvableException e = assertThrows(RessourceIntrouvableException.class,
 				() -> produitService.updateProduit(99999L, produit));
 		assertEquals("Produit introuvable avec l'ID 99999", e.getMessage());
-
-		// Assert :
 		verify(produitRepository, never()).save(any());
 	}
-
 }

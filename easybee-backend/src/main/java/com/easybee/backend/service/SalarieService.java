@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SalarieService {
 
-	private static final String RESSOURCE = "Salarie";
+	private static final String RESSOURCE = "Salarié";
 	private final SalarieRepository salarieRepository;
 
 	public Salarie createSalarie(Salarie nouveauSalarie) {
