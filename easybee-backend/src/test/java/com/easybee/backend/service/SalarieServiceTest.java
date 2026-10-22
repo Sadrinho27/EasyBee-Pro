@@ -97,4 +97,43 @@ class SalarieServiceTest {
 		// Assert :
 		verify(salarieRepository, never()).save(any());
 	}
+
+	@Test
+	void updateSalarie_identifiantPrisParUnAutre_lanceConflit() {
+		// Arrange :
+		Salarie jeanEnBase = salarieValide();
+		Salarie modifs = salarieValide();
+		modifs.setIdentifiant("ptest");
+		Salarie paul = salarieValide();
+		paul.setId(7L);
+		paul.setIdentifiant("ptest");
+
+		when(salarieRepository.findById(5L)).thenReturn(Optional.of(jeanEnBase));
+		when(salarieRepository.findByIdentifiant("ptest")).thenReturn(Optional.of(paul));
+
+		// Act :
+		ConflitException e = assertThrows(ConflitException.class, () -> salarieService.updateSalarie(5L, modifs));
+		assertEquals("Cet identifiant est déjà utilisé", e.getMessage());
+
+		// Assert :
+		verify(salarieRepository, never()).save(any());
+	}
+
+	@Test
+	void updateSalarie_garderSonPropreIdentifiant_estAccepte() {
+		// Arrange :
+		Salarie jeanEnBase = salarieValide();
+		Salarie modifs = salarieValide();
+
+		when(salarieRepository.findById(5L)).thenReturn(Optional.of(jeanEnBase));
+		when(salarieRepository.findByIdentifiant("jtest")).thenReturn(Optional.of(jeanEnBase));
+		when(salarieRepository.save(any(Salarie.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		// Act :
+		salarieService.updateSalarie(5L, modifs);
+
+		// Assert :
+		verify(salarieRepository).save(jeanEnBase);
+	}
+
 }

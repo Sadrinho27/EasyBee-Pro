@@ -43,6 +43,10 @@ public class SalarieService {
 	public Salarie updateSalarie(Long id, Salarie salarieDetails) {
 		return salarieRepository.findById(id).map(salarieExistant -> {
 			this.verifierSalarie(salarieDetails);
+			if (salarieRepository.findByIdentifiant(salarieDetails.getIdentifiant())
+					.filter(autre -> !autre.getId().equals(salarieExistant.getId())).isPresent()) {
+				throw new ConflitException("Cet identifiant est déjà utilisé");
+			}
 
 			salarieExistant.setMatriculeSalarie(salarieDetails.getMatriculeSalarie());
 			salarieExistant.setNomSalarie(salarieDetails.getNomSalarie());
