@@ -57,7 +57,11 @@ public class CommandeApproService {
 
 		// 3. Mise à jour du stock avec la VRAIE quantité
 		int quantiteAAjouter = (commande.getQuantite() != null) ? commande.getQuantite() : 1;
+		if (produit.getStockEntrepot() < quantiteAAjouter) {
+			throw new ConflitException("Le stock entrepot est insuffisant");
+		}
 		produit.setStockMagasin(produit.getStockMagasin() + quantiteAAjouter);
+		produit.setStockEntrepot(produit.getStockEntrepot() - quantiteAAjouter);
 		produitRepo.save(produit);
 
 		// 4. Changer le statut de la commande
