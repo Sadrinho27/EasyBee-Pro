@@ -35,9 +35,10 @@ public class CommandeApproService {
 	public List<CommandeAppro> getAll() {
 		return commandeApproRepository.findAll();
 	}
-	
+
 	public CommandeAppro getById(Long id) {
-		return commandeApproRepository.findById(id).orElseThrow(() -> new RessourceIntrouvableException("Commande", id));
+		return commandeApproRepository.findById(id)
+				.orElseThrow(() -> new RessourceIntrouvableException("Commande", id));
 	}
 
 	@Transactional
@@ -51,8 +52,8 @@ public class CommandeApproService {
 		}
 
 		// 2. Trouver le produit correspondant
-		Produit produit = produitRepo.findByDesignation(commande.getNomCommande())
-				.orElseThrow(() -> new ConflitException("Aucun produit ne correspond à " +  "'" + commande.getNomCommande() + "'"));
+		Produit produit = produitRepo.findByDesignation(commande.getNomCommande()).orElseThrow(
+				() -> new ConflitException("Aucun produit ne correspond à " + "'" + commande.getNomCommande() + "'"));
 
 		// 3. Mise à jour du stock avec la VRAIE quantité
 		int quantiteAAjouter = (commande.getQuantite() != null) ? commande.getQuantite() : 1;
@@ -71,7 +72,9 @@ public class CommandeApproService {
 		if (commande.getQuantite() != null && commande.getQuantite() <= 0) {
 			throw new DonneesInvalidesException("La quantité doit être supérieure ou égale à 1");
 		}
-
+		if (commande.getCategorieSalarie() == null || commande.getCategorieSalarie().getId() == null) {
+			throw new DonneesInvalidesException("La catégorie est obligatoire");
+		}
 	}
 
 }

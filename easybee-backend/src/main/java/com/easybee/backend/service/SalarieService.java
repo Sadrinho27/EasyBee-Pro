@@ -91,7 +91,9 @@ public class SalarieService {
 		if (salarie.getIdentifiant() == null || salarie.getIdentifiant().isBlank()) {
 			throw new DonneesInvalidesException("L'identifiant est obligatoire");
 		}
-
+		if (salarie.getCategorie() == null || salarie.getCategorie().getId() == null) {
+			throw new DonneesInvalidesException("La catégorie est obligatoire");
+		}
 	}
 
 	private String hasher(String mdp) {

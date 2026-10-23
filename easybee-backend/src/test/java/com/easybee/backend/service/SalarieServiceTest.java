@@ -99,6 +99,34 @@ class SalarieServiceTest {
 	}
 
 	@Test
+	void createSalarie_sansCategorie_lanceDonneesInvalides() {
+		// Arrange :
+		Salarie salarie = salarieValide();
+		salarie.setCategorie(null);
+
+		// Act :
+		DonneesInvalidesException e = assertThrows(DonneesInvalidesException.class,
+				() -> salarieService.createSalarie(salarie));
+		assertEquals("La catégorie est obligatoire", e.getMessage());
+
+		// Assert :
+		verify(salarieRepository, never()).save(any());
+	}
+
+	@Test
+	void createSalarie_categorieSansId_lanceDonneesInvalides() {
+		// Arrange : une catégorie présente, mais sans id (comme "categorie":{} en JSON)
+		Salarie salarie = salarieValide();
+		salarie.setCategorie(new CategorieSalarie());
+
+		// Act + Assert
+		DonneesInvalidesException e = assertThrows(DonneesInvalidesException.class,
+				() -> salarieService.createSalarie(salarie));
+		assertEquals("La catégorie est obligatoire", e.getMessage());
+		verify(salarieRepository, never()).save(any());
+	}
+
+	@Test
 	void updateSalarie_identifiantPrisParUnAutre_lanceConflit() {
 		// Arrange :
 		Salarie jeanEnBase = salarieValide();
