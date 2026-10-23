@@ -37,6 +37,91 @@ Le projet a été pensé selon les standards modernes de l'industrie pour garant
 
 ---
 
+## ⚙️ Installation locale
+
+### 📋 Prérequis
+| Outil | Version | Rôle |
+|---|---|---|
+| **JDK** | 17 minimum (21 recommandé) | Exécuter le backend Spring Boot |
+| **MySQL** | 8.x (ou XAMPP / MariaDB) | Base de données |
+| **Node.js** | 22 LTS | Frontend React (facultatif pour le backend seul) |
+
+> Maven n'est pas nécessaire : le projet embarque le wrapper `mvnw`.
+
+### 1. Cloner le projet
+```bash
+git clone https://github.com/Sadrinho27/EasyBee-Pro.git
+cd EasyBee-Pro
+```
+
+### 2. Créer la base de données
+Importer le script `easybee-backend/sql/easybee.sql`, par exemple via **phpMyAdmin → Importer**, ou en ligne de commande :
+```bash
+mysql -u root -p < easybee-backend/sql/easybee.sql
+```
+Le script crée la base `easybee`, toutes les tables, ainsi que les catégories de salariés et les produits de démonstration.
+
+### 3. Configurer la connexion
+Vérifier les identifiants dans `easybee-backend/src/main/resources/application.properties` :
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/easybee?serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=
+```
+> Par défaut, la configuration correspond à XAMPP (utilisateur `root`, sans mot de passe). Adapter si besoin.
+
+### 4. Lancer le backend
+```bash
+cd easybee-backend
+./mvnw spring-boot:run        # Windows (PowerShell) : .\mvnw.cmd spring-boot:run
+```
+L'API est disponible sur **http://localhost:8080**. Test rapide : http://localhost:8080/api/produits
+
+### 5. Lancer les tests
+```bash
+./mvnw test
+```
+Les tests unitaires (JUnit 5 + Mockito) couvrent la logique métier des services et ne nécessitent **pas** de base de données.
+
+### 6. Lancer le frontend (facultatif)
+```bash
+cd easybee-frontend
+npm install
+npm run dev
+```
+L'interface est disponible sur **http://localhost:5173**.
+
+### 🐋 Avec Docker
+```bash
+docker compose up -d
+```
+> ⚠️ Le `docker-compose.yml` crée une base nommée `easybee` (mot de passe `root`). Pour y importer le script, utiliser phpMyAdmin sur **http://localhost:8081**.
+
+---
+
+## 🔌 Endpoints de l'API
+
+| Ressource | Méthode | URL | Description |
+|---|---|---|---|
+| Produits | `GET` | `/api/produits` | Liste des produits |
+| | `GET` | `/api/produits/{id}` | Détail d'un produit |
+| | `GET` | `/api/produits/alerte-stock` | Produits sous le stock minimum |
+| | `POST` / `PUT` / `DELETE` | `/api/produits[/{id}]` | Création, modification, suppression |
+| Salariés | `GET` | `/api/salaries[/{id}]` | Liste ou détail |
+| | `POST` / `PUT` / `DELETE` | `/api/salaries[/{id}]` | CRUD (mot de passe haché avec BCrypt) |
+| Commandes | `GET` | `/api/commandes[/{id}]` | Liste ou détail |
+| | `POST` | `/api/commandes` | Création (statut « en attente ») |
+| | `PUT` | `/api/commandes/{id}/valider` | Validation : transfert du stock entrepôt vers le magasin |
+| Auth | `POST` | `/api/auth/login` | Connexion |
+
+**Format des erreurs** (commun à toute l'API) :
+```json
+{ "status": 404, "message": "Produit introuvable avec l'ID 99999", "date": "2026-10-23T14:32:10" }
+```
+Codes utilisés : `400` données invalides · `401` identifiants incorrects · `404` ressource introuvable · `409` conflit (identifiant déjà pris, commande déjà validée, stock insuffisant).
+
+---
+
 ## 📂 Structure du Projet
 
 ```text
