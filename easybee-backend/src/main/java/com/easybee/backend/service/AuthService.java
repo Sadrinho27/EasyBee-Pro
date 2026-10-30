@@ -23,7 +23,7 @@ public class AuthService {
 		String hash = (salarie != null) ? salarie.getMotDePasse() : FAUX_HASH;
 		boolean result = BCrypt.checkpw(password, hash);
 
-		if (salarie != null && result) {
+		if (salarie != null && result && password != null) {
 			return salarie;
 		} else {
 			throw new IdentifiantsInvalidesException(MESSAGE_ERREUR);
